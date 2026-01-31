@@ -32,63 +32,68 @@
       <input type="number" id="input-savings" step="any" required />
     </label>
 
-    <button type="submit">Calculate</button>
+    <button type="button" onclick="calculate()">Calculate</button>
+    <button type="button" onclick="save()">Save</button>
+
   </form>
 
   <div id="feedbackempl"></div>
 
    <div id="feedbacksavings"></div>
 
-  <script>
-    const form = document.getElementById("tax-form");
-    const inputA = document.getElementById("input-empl");
-    const inputB = document.getElementById("input-savings");
-    const feedback1 = document.getElementById("feedbackempl");
-    const feedback2= document.getElementById("feedbacksavings");
+   <script>
+    let feedback1 = document.getElementById("feedbackempl");
+    let feedback2= document.getElementById("feedbacksavings");
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();  
-      feedback1.textContent = ""; // clear previous messages
-      feedback2.textContent = ""; // clear previous messages
+    function calculate() {
+      const a = document.getElementById('input-empl').value;
+      const b = document.getElementById('input-savings').value;
+      feedback1.textContent = feedback2.textContent = "";
 
-      const a = inputA.value;
-      const b = inputB.value;
-
-      try {
-        const res = await axios.post("/api/tax", {a, b}, {
-          headers: { "Content-Type": "application/json" } //the result is a json objset
-        });
-
-        feedback1.className = "result";
+      axios.post("/api/calcTax", {a, b}).then( res => {
+        feedback1.className = feedback2.className = "result";
         feedback1.textContent = `Tax on income: ${res.data.taxIncome}`;
-
-        feedback2.className = "result";
         feedback2.textContent = `Tax on savings: ${res.data.taxSavings}`;
-      } 
-      catch (err) {
-        if (err.response.data.error1)
-        {
-          feedback1.className = "error1";
-          feedback1.textContent = "Please provide your income";
-        }
-        else if (err.response.data.error2)
-        {
-          feedback1.className = "error2";
-          feedback1.textContent = "Please provide positive income";
-        }
-        else if (err.response.data.error3)
-        {
-          feedback2.className = "error3";
-          feedback2.textContent = "No tax is paid on saving interest less than £1000";
-        }
-        else if (err.response.data.error4)
-        {
-          feedback1.className = "error4";
-          feedback1.textContent = "Both incomes must be numerical";
-        }
+      }).
+      catch (err => displayError(data));
+    }
 
+    function save() {
+      const a = document.getElementById('input-empl').value;
+      const b = document.getElementById('input-savings').value;
+      feedback1.textContent = feedback2.textContent = "";
+      
+      axios.post("/api/saveTax", {a, b}).then( res => {
+        feedback1.className = feedback2.className = "result";
+        feedback1.textContent = "Saved successfully";
+        //feedback2.textContent = `Saved tax on savings: ${res.data.taxSavings}`;
+      }).
+      catch (err => displayError(data));
+    }
+
+    function displayError(data) {
+      if (data.error1) {
+        feedback1.className = "error1";
+        feedback1.textContent = "Please provide your income";
       }
-    });
+      else if (data.error2) {
+        feedback1.className = "error2";
+        feedback1.textContent = "Please provide positive income";
+      }
+      else if (data.error3) {
+        feedback2.className = "error3";
+        feedback2.textContent = "No tax is paid on saving interest less than £1000";
+      }
+      else if (data.error4) {
+        feedback1.className = "error4";
+        feedback1.textContent = "Both incomes must be numerical";
+      }
+      else if (data.error) {
+        feedback.className = "error";
+        feedback.textContent = "Error saving data";
+      }
+    }    
+    
   </script>
 </body>
 </html>

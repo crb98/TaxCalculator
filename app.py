@@ -7,8 +7,8 @@ app = Flask(__name__)
 def home():
   return render_template("index.html")
 
-@app.route("/api/tax", methods=["POST"])
-def calc_sum():
+@app.route("/api/calcTax", methods=["POST"])
+def calcTax():
   """
   Expects JSON like: {"a": <number>, "b": <number>}
   Returns: {"tax": <number>}
@@ -35,6 +35,20 @@ def calc_sum():
     return jsonify({"error4": "Both incomes must be numerical"}), 400
 
   
+@app.route("/api/saveTax", methods=["POST"])
+def commit_sum():
+  data = request.get_json(silent=True)
+  
+  try:
+    a = float(data["a"])
+    b = float(data["b"])
+    
+    # this is where we save the inputs in a db
+
+    return jsonify({"message": "Saved"}), 200
+    
+  except (ValueError, TypeError):
+    return jsonify({"error": "Error saving"}), 400
 
 
 if __name__ == "__main__":
