@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Confirm Inputs</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 2rem; }
+    .card { border: 1px solid #c9c9c9; padding: 1rem; max-width: 360px; }
+    .summary { white-space: pre-line; margin: 0.5rem 0 1rem; }
+    button { padding: 0.6rem 0.9rem; font-size: 1rem; cursor: pointer; }
+    .result { margin-top: 1rem; font-weight: 600; }
+    .error { margin-top: 1rem; }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+  <h1>Confirm Inputs</h1>
+
+  <div class="card">
+    {% if incomes %}
+      <strong>Please confirm your inputs:</strong>
+      <div class="summary">Employment income: {{ incomes.a }}
+Savings income: {{ incomes.b }}
+Employment bonus: {{ incomes.c }}</div>
+      <button type="button" id="confirm-btn">Confirm and Calculate</button>
+    {% else %}
+      <div class="error">No inputs found. Please return to the home page.</div>
+    {% endif %}
+  </div>
+
+  <div id="feedbackempl"></div>
+  <div id="feedbacksavings"></div>
+  <div id="feedbackbonus"></div>
+
+  <script>
+    const feedback1 = document.getElementById("feedbackempl");
+    const feedback2 = document.getElementById("feedbacksavings");
+    const feedback3 = document.getElementById("feedbackbonus");
+    const confirmButton = document.getElementById("confirm-btn");
+
+    if (confirmButton) {
+      confirmButton.addEventListener("click", () => {
+        feedback1.textContent = feedback2.textContent = feedback3.textContent = "";
+
+        axios.post("/api/confirm").then(res => {
+          feedback1.className = feedback2.className = feedback3.className = "result";
+          feedback1.textContent = `Tax on income: ${res.data.taxIncome}`;
+          feedback2.textContent = `Tax on savings: ${res.data.taxSavings}`;
+          feedback3.textContent = `Tax on bonus: ${res.data.taxBonus}`;
+        }).catch(err => displayError(err));
+      });
+    }
+
+    function displayError(err) {
+      const responseData = err && err.response && err.response.data ? err.response.data : null;
+      feedback1.className = "error";
+
+      if (responseData && responseData.error1) {
+        feedback1.textContent = "Please provide all income fields";
+      }
+      else if (responseData && responseData.error2) {
+        feedback1.textContent = "Please provide positive income";
+      }
+      else if (responseData && responseData.error4) {
+        feedback1.textContent = "All incomes must be numerical";
+      }
+      else {
+        feedback1.textContent = "Unable to calculate tax right now";
+      }
+    }
+  </script>
+</body>
+</html>

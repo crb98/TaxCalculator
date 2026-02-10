@@ -32,6 +32,11 @@
       <input type="number" id="input-savings" step="any" required />
     </label>
 
+    <label>
+      Employment bonus
+      <input type="number" id="input-bonus" step="any" required />
+    </label>
+
     <button type="button" onclick="calculate()">Calculate</button>
     <button type="button" onclick="save()">Save</button>
 
@@ -39,20 +44,27 @@
 
   <div id="feedbackempl"></div>
   <div id="feedbacksavings"></div>
+  <div id="feedbackbonus"></div>
 
    <script>
     let feedback1 = document.getElementById("feedbackempl");
     let feedback2= document.getElementById("feedbacksavings");
+    let feedback3 = document.getElementById("feedbackbonus");
 
     function calculate() {
       const a = document.getElementById('input-empl').value;
       const b = document.getElementById('input-savings').value;
-      feedback1.textContent = feedback2.textContent = "";
+      const c = document.getElementById('input-bonus').value;
+      feedback1.textContent = feedback2.textContent = feedback3.textContent = "";
 
-      axios.post("/api/calcTax", {a, b}).then( res => {
-        feedback1.className = feedback2.className = "result";
-        feedback1.textContent = `Tax on income: ${res.data.taxIncome}`;
-        feedback2.textContent = `Tax on savings: ${res.data.taxSavings}`;
+      if (a === "" || b === "" || c === "") {
+        feedback1.className = "error";
+        feedback1.textContent = "Please provide all income fields";
+        return;
+      }
+
+      axios.post("/api/inputs", {a, b, c}).then(() => {
+        window.location.href = "/confirm";
       }).
       catch (err => displayError(err));
     }
@@ -60,7 +72,7 @@
     function save() {
       const a = document.getElementById('input-empl').value;
       const b = document.getElementById('input-savings').value;
-      feedback1.textContent = feedback2.textContent = "";
+      feedback1.textContent = feedback2.textContent = feedback3.textContent = "";
       
       axios.post("/api/saveTax", {a, b}).then( res => {
         feedback1.className = feedback2.className = "result";
@@ -70,25 +82,24 @@
     }
 
     function displayError(err) {
-      if (err.response.data.error1) {
-        //feedback1.className = "error";
-        feedback1.textContent = "Please provide your income";
+      const responseData = err && err.response && err.response.data ? err.response.data : null;
+
+      feedback1.className = "error";
+
+      if (responseData && responseData.error1) {
+        feedback1.textContent = "Please provide all income fields";
       }
-      else if (err.response.data.error2) {
-        //feedback1.className = "error";
+      else if (responseData && responseData.error2) {
         feedback1.textContent = "Please provide positive income";
       }
-      //else if (err.response.error3) {
-        //feedback2.className = "error";
-        //feedback2.textContent = "No tax is paid on saving interest less than £1000";
-      //}
-      else if (err.response.error4) {
-        feedback1.className = "error";
-        feedback1.textContent = "Both incomes must be numerical";
+      else if (responseData && responseData.error4) {
+        feedback1.textContent = "All incomes must be numerical";
       }
-      else if (err.response.error) {
-        feedback.className = "error";
-        feedback.textContent = "Error saving data";
+      else if (responseData && responseData.error) {
+        feedback1.textContent = "Error saving data";
+      }
+      else {
+        feedback1.textContent = "Unable to calculate tax right now";
       }
     }    
     
